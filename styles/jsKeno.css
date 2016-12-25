@@ -1,0 +1,15 @@
+.cell {
+	height: 40px;
+	width: 40px;
+	text-align: center;
+	display: table-cell;
+	vertical-align: middle;
+	background-size: cover;
+}
+
+#messageBoard {
+	height: 30px;;
+	text-align: center;
+	display: table-cell;
+	vertical-align: middle;
+}

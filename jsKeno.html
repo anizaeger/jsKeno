@@ -1,0 +1,101 @@
+<html>
+<head>
+	<meta charset="utf-8"/>
+	<title>jsKeno</title>
+	<script src="scripts/jsKeno.js"></script>
+	<link rel="stylesheet" type="text/css" href="styles/jsKeno.css">
+</head>
+<body onLoad="init()">
+	<table width=100%>
+		<tr>
+			<td>
+				<table id="leftPane">
+					<tr>
+						<td>
+							Spots:<br />
+							Hits:
+						</td>
+						<td>
+							<input type="number" id="spots" readonly style="width: 3em"/><br />
+							<input type="number" id="hits" readonly style="width: 3em"/>
+						</td>
+					</tr>
+				</table>
+				<button id="qpBtn" onClick="quickPick()" disabled>Quick Pick</button>
+			</td>
+			<td>
+				<table id="playfield">
+					&nbsp;
+				</table>
+			</td>
+			<td>
+				<table id="draws" rowspan=2>
+					&nbsp;
+				</table>
+			</td>
+		</tr>
+		<tr>
+			<td colspan=2>
+				<table width="100%">
+					<tr>
+						<td colspan="4" align="center">
+							<span id="wintype">&nbsp;</span><br />
+						</td>
+					</tr>
+					<tr>
+						<td align="right">
+							Coins In:<br />
+							Credits:<br />
+						</td>
+						<td style="text-align:left">
+							<input type="number" id="betAmt" readonly style="width: 3em"/><br />
+							<input type="number" id="credits" readonly style="width: 7em"/><br />
+						</td>
+						<td align="right">
+							Win:<br />
+							Winner Paid:<br />
+						</td>
+						<td>
+							<input type="number" id="win" readonly style="width: 7em"/><br />
+							<input type="number" id="paid" readonly style="width: 7em"/><br />
+						</td>
+					</tr>
+					<tr>
+						<td colspan="2" align="center">
+							<span id="maxcred">&nbsp;</span>
+						</td>
+						<td colspan="2" align="center">
+							<span id="gameover">&nbsp;</span>
+						</td>
+					</tr>
+					<tr>
+						<td width="100">
+							<button class="small" onclick="cashOut()">[ 5 ]<br />Cash<br />Out</button>
+						</td>
+						<td width="100">
+							<button class="large" onclick="betOne()">[ 1 ]<br />Bet One<br />Credit</button>
+						</td>
+						<td width="100">
+							<button class="large" onclick="clearCard()">Clear<br />&nbsp;<br />Card</button>
+						</td>
+						<td width="100">
+							<button class="large" onclick="startGame()">[ 2 ]<br />Re-Bet<br />START GAME</button>
+						</td>
+						<td width="100">
+							<button class="large" onclick="betMax()">[ 3 ]<br />PLAY MAX<br />CREDIT</button>
+						</td>
+					</tr>
+					<tr>
+						<td colspan="2" >
+							<button class="wide" onclick="insertCoin()">[ 4 ]<br />Insert Coin</button>
+						</td><td />
+						<td colspan="2" >
+							<button class="wide" onclick="insertBill()">[ 6 ]<br />Insert Bill</button>
+						</td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+	</table>
+</body>
+<html>
