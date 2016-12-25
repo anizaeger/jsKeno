@@ -1,9 +1,10 @@
 var BALLS = 80;
 var DRAWS = 20;
 
-var maxSpots = 10;
-var maxBet = 5;
-var houseEdge = 25;	// House edge for payout compared to true odds.
+var maxSpots = 10;	// Maximum number of playable spots [Default: 10]
+var maxBet = 5;		// Maximum bet per game [Default: 5]
+var houseEdge = 15;	// House edge for payout compared to true odds.  Payout calculated from odds will be reduced by this percentage [Default: 15]
+var maxPayout = 100000;	// Maximum payout per game [Default: 100000]
 
 var spots;	// Number of spots 
 var hits;	// Number of hits
@@ -13,14 +14,14 @@ var pool = new Array( BALLS );	// Array representing the 80 keno balls.  Element
 var drawn = new Array( DRAWS );	// Array representing the 20 balls drawn during a keno game
 
 var combos;
-var odds = new Array( DRAWS + 1);
-var pcnt = new Array( DRAWS + 1);
+var spotCombos = new Array( DRAWS + 1);
+var pcntOdds = new Array( DRAWS + 1);
 var payout = new Array( DRAWS + 1);
 
 var betAmt = 0;
-var spots = 0;
 
-function init() {	
+function init() {
+	spots = 0;
 	// Initialize ball pool by setting array elements to numbers 1 through 80.
 	for ( b = 0; b < BALLS; b++ ) {
 		pool[ b ] = b + 1;
@@ -140,13 +141,12 @@ function clearBoard() {
 
 function clearCard() {
 	for ( n = 0; n < BALLS; n++ ) {
-		daubCell(n,0);
-	}
-	for ( s = 0; s <= DRAWS; s++ ) {
-		odds[s] = 0;
+		card[n] = 0;
+		document.getElementById("n"+n).style.backgroundImage="none";
+		document.getElementById("n"+n).style.color="black";
 	}
 	spots = 0;
-	clearPaytable();
+	clearOdds();
 }
 
 function pickNum(num) {
@@ -237,6 +237,7 @@ function betOne() {
 	clearBoard();
 	betAmt++;
 	document.getElementById("betAmt").value=betAmt;
+	calcPay();
 }
 
 function betMax() {
@@ -270,18 +271,34 @@ function kenoProbs(balls,drawn,spots) {
 
 function calcOdds() {
 	var combos = 0;
-	minHits = Math.floor(( spots / 2 ) + 1 );
 	for ( s = 0; s <= spots; s++ ) {
-		odds[s] = kenoProbs(BALLS,DRAWS,spots);
-		combos += odds[s]
+		spotCombos[s] = kenoProbs(BALLS,DRAWS,spots);
+		combos += spotCombos[s]
 	}
-	
 	for ( p = 0; p <= spots; p++ ) {
-		pcnt[p] = odds[p] / combos;
-		if ( p < minHits ) {
-			payout[p] = 0;
+		pcntOdds[p] = ( spotCombos[p] / combos );
+	}
+	calcPay();
+}
+
+function calcPay() {
+	if ( spots == 0 ) {
+		payout[0] = 0;
+	} else {
+		if ( spots == 2 ) {
+			minHits = 2;
 		} else {
-			payout[p] = Math.round( 1 / pcnt[p] );
+			minHits = Math.round( spots / 2 );
+		}
+		for ( p = 0; p <= spots; p++ ) {
+			if ( p < minHits && pcntOdds[p] > pcntOdds[minHits] ) {
+				payout[p] = 0;
+			} else {
+				payout[p] = Math.round( ( 1 / pcntOdds[p] ) * ( ( 100 - houseEdge ) / 100 ) ) * betAmt;
+				if ( payout[p] > maxPayout ) {
+					payout[p] = maxPayout;
+				}
+			}
 		}
 	}
 	printPaytable();
@@ -290,15 +307,25 @@ function calcOdds() {
 function printPaytable() {
 	var payTxt = '';
 	document.getElementById("paytable").innerHTML=payTxt;
-	payTxt='<tr><td width=10%>Spots</td><td width=35%>Odds</td><td width=35%>Percentage</td><td>Payout</td></tr>';
+	payTxt='<tr><td width=10%>Spots</td><td>Payout</td></tr>';
 	for (s = 0; s <= spots; s++) {
 		
-		payTxt += '<tr><td>' + s + '</td><td>1:' + odds[s] + '</td><td>' + pcnt[s] + '</td><td>' + payout[s] + '</td></tr>';
+		payTxt += '<tr><td>' + s + '</td><td>' + payout[s] + '</td></tr>';
 	}
 	document.getElementById("paytable").innerHTML=payTxt;
 }
 
+function clearOdds() {
+	for ( s = 0; s <= DRAWS; s++ ) {
+		spotCombos[s] = 0;
+		pcntOdds[s] = 0;
+		payout[s] = 0;
+		clearPaytable();
+	}
+}
+
 function clearPaytable() {
-	var payTxt = '<tr><td width=10%>Spots</td><td width=35%>Odds</td><td width=35%>Percentage</td><td>Payout</td></tr>';
+	var payTxt = '<tr><td width=10%>Spots</td><td>Payout</td></tr>';
+	payTxt += '<tr><td>0</td><td>0</td></tr>';
 	document.getElementById("paytable").innerHTML=payTxt;
 }
