@@ -12,20 +12,13 @@ var board = new Array( BALLS );	// Array representing the 80 spaces on a keno ga
 var pool = new Array( BALLS );	// Array representing the 80 keno balls.  Element value: ball number
 var drawn = new Array( DRAWS );	// Array representing the 20 balls drawn during a keno game
 
-var paytable = new Array();
-paytable[1] = ["",3];
-paytable[2] = ["","",15];
-paytable[3] = ["","",2,46];
-paytable[4] = ["","",2,5,91];
-paytable[5] = ["","","",3,12,810];
-paytable[6] = ["","","",3,4,70,1600];
-paytable[7] = ["","","",1,2,21,400,7000];
-paytable[8] = ["","","","",2,12,98,1652,10000];
-paytable[9] = ["","","","",1,6,44,335,4700,10000];
-paytable[10] = ["","","","","",5,24,142,1000,4500,10000];
+var combos;
+var odds = new Array( DRAWS + 1);
+var pcnt = new Array( DRAWS + 1);
+var payout = new Array( DRAWS + 1);
 
 var betAmt = 0;
-var spots;
+var spots = 0;
 
 function init() {	
 	// Initialize ball pool by setting array elements to numbers 1 through 80.
@@ -38,6 +31,7 @@ function init() {
 	initDrawBoard();
 	clearBoard();
 	clearCard();
+	clearPaytable();
 }
 
 // Generate HTML table representing keno ball "rabbit ears"
@@ -148,7 +142,11 @@ function clearCard() {
 	for ( n = 0; n < BALLS; n++ ) {
 		daubCell(n,0);
 	}
+	for ( s = 0; s <= DRAWS; s++ ) {
+		odds[s] = 0;
+	}
 	spots = 0;
+	clearPaytable();
 }
 
 function pickNum(num) {
@@ -161,12 +159,12 @@ function pickNum(num) {
 	} else {
 		if ( spots < maxSpots) { daubCell(num,1); }
 	}
-}
-
-function calcPays() {
-	minHits = Math.floor(( spots / 2 ) + 1 );
-	
-	// Combinations formula: 
+	calcOdds();
+	if ( spots == 0 ) {
+		clearPaytable();
+	} else {
+		printPaytable();
+	}
 }
 
 function quickPick() {
@@ -195,6 +193,7 @@ function quickPick() {
 		qp = pool[ p ] - 1;
 		daubCell(qp,1);
 	}
+	calcOdds();
 }
 
 function qpPrompt() {
@@ -242,4 +241,64 @@ function betOne() {
 
 function betMax() {
 	
+}
+
+/*
+ * Paytable calculation
+ */
+
+function factorial(num) {
+	var factor = 1;
+	for ( x = num; x > 1; x-- ) {
+		factor *= x
+	}
+	return factor;
+}
+function combin(total,part) {
+	var combos;
+	var num = factorial(total);
+	var denom = factorial(part) * factorial(total-part)
+	combos = num / denom;
+	return combos;
+}
+function kenoProbs(balls,drawn,spots) {
+	var odds;
+	var undrawn = balls - drawn;
+	odds = Math.round(combin(drawn,s)*combin(undrawn,spots-s));
+	return odds;
+}
+
+function calcOdds() {
+	var combos = 0;
+	minHits = Math.floor(( spots / 2 ) + 1 );
+	for ( s = 0; s <= spots; s++ ) {
+		odds[s] = kenoProbs(BALLS,DRAWS,spots);
+		combos += odds[s]
+	}
+	
+	for ( p = 0; p <= spots; p++ ) {
+		pcnt[p] = odds[p] / combos;
+		if ( p < minHits ) {
+			payout[p] = 0;
+		} else {
+			payout[p] = Math.round( 1 / pcnt[p] );
+		}
+	}
+	printPaytable();
+}
+
+function printPaytable() {
+	var payTxt = '';
+	document.getElementById("paytable").innerHTML=payTxt;
+	payTxt='<tr><td width=10%>Spots</td><td width=35%>Odds</td><td width=35%>Percentage</td><td>Payout</td></tr>';
+	for (s = 0; s <= spots; s++) {
+		
+		payTxt += '<tr><td>' + s + '</td><td>1:' + odds[s] + '</td><td>' + pcnt[s] + '</td><td>' + payout[s] + '</td></tr>';
+	}
+	document.getElementById("paytable").innerHTML=payTxt;
+}
+
+function clearPaytable() {
+	var payTxt = '<tr><td width=10%>Spots</td><td width=35%>Odds</td><td width=35%>Percentage</td><td>Payout</td></tr>';
+	document.getElementById("paytable").innerHTML=payTxt;
 }
