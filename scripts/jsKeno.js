@@ -56,6 +56,7 @@ var maxSpots = 10;		// Maximum number of playable spots [Default: 10]
 var betLimit = 5;		// Maximum bet per game [Default: 5]
 var houseEdge = 30;		// House edge for payout compared to true odds.  Payout calculated from odds will be reduced by this percentage [Default: 30]
 var maxPayout = 100000;		// Maximum payout per game [Default: 100000]
+var credits = 0;
 
 var spots;	// Number of spots 
 var hits;	// Number of hits
@@ -68,12 +69,10 @@ var combos;
 var spotCombos = new Array( DRAWS + 1);
 var pcntOdds = new Array( DRAWS + 1);
 var payout = new Array( DRAWS + 1);
+var gameOver;
 
 function init() {
 	spots = 0;
-	document.getElementById("spots").value=spots;
-	betAmt = 0;
-	document.getElementById("betAmt").value=betAmt;
 	// Initialize ball pool by setting array elements to numbers 1 through 80.
 	for ( b = 0; b < BALLS; b++ ) {
 		pool[ b ] = b + 1;
@@ -85,6 +84,9 @@ function init() {
 	clearBoard();
 	clearCard();
 	clearPaytable();
+	endGame();
+	document.getElementById("spots").value=spots;
+	document.getElementById("betAmt").value=betAmt;
 }
 
 // Generate HTML table representing keno ball "rabbit ears"
@@ -114,7 +116,7 @@ function initTable() {
 		}
 		boardTxt += '</tr>';
 		if ( row == 3 ) {	// Generate gap/message board between upper and lower halfs of game card
-			boardTxt += '<tr><td colspan=10 align="center" ><div id="messageBoard">Game Over</div></td></tr>'
+			boardTxt += '<tr><td colspan=10 align="center" ><div id="messageBoard"></div></td></tr>'
 		}
 	}
 	document.getElementById("playfield").innerHTML=boardTxt;
@@ -171,6 +173,8 @@ function popDraws(dIndex) {
 function checkHits() {
 	if ( payout[hits] > 0 ) {
 		setTimeout(function() {
+			document.getElementById('p' + hits + 'c1').innerHTML="-->"
+			document.getElementById('p' + hits + 'c2').innerHTML="<--"
 			payWin();
 		},150 )
 	} else {
@@ -179,12 +183,62 @@ function checkHits() {
 }
 
 function payWin() {
-	alert("Win!")
+	credits += payout[hits];
+	document.getElementById("credits").value=credits;
 }
+
+/*
+function payWin(wintype,payout,i,paySound) {
+	var loopTime;
+	document.getElementById("win").value=payout;
+	
+	if (payout >= 300) {
+		loopTime = 25;
+	} else {
+		loopTime = 100;
+	}
+	if ( wintype == 0 && betAmt == maxLineBet) {
+		jackpot(0);
+		return;
+	} else {
+		if ( loopTime == 25 ) {
+			if ( i % 4 == 0 ) {
+				playSound("paySound" + paySound);
+				paySound++;
+			}
+		} else {
+			playSound("paySound" + paySound);
+			paySound++;
+		}
+		if (paySound == paySounds ) { paySound = 0; }
+	}
+	
+	i++;
+	credits++
+	setCookie("credits",credits,expiry);
+	document.getElementById("paid").value=i;
+	document.getElementById("credits").value=credits;
+	payStats(-1);
+
+	if ( dbgRapid == 1 ) {
+		loopTime = 0;
+	}
+
+	setTimeout(function () {
+		if (i < payout) {
+			payWin(wintype,payout,i,paySound);
+		} else {
+			document.getElementById("wintype").innerHTML="<marquee>"+paytable[wintype][4]+"</marquee>";
+			endGame();
+		}
+	}, loopTime);
+}
+*/
 
 function endGame() {
 	betAmt = 0;
-	document.getElementById("messageBoard").innerHTML="Game Over";
+	gameOver = 1;
+	document.getElementById("messageBoard").innerHTML="Game Over - Play " + betLimit + " Credits";
 }
 
 function clearBoard() {
@@ -202,6 +256,9 @@ function clearBoard() {
 }
 
 function clearCard() {
+	if ( gameOver == 1 ) {
+		return;
+	}
 	for ( n = 0; n < BALLS; n++ ) {
 		card[n] = 0;
 		document.getElementById("n"+n).style.backgroundImage="none";
@@ -292,12 +349,25 @@ function startGame() {
 	betAmt = 0;
 }
 
+/*
+	Credit related functions
+*/
+
+function insertCoin() {
+	return;
+}
+
+function insertBill() {
+	return;
+}
+
 function cashOut() {
 	clearBoard();
 }
 
 function betOne() {
 	if ( betAmt < betLimit ) {
+		gameOver = 0;
 		document.getElementById("qpBtn").disabled=false;
 		document.getElementById("spots").value=spots;
 		document.getElementById("messageBoard").innerHTML="&nbsp;";
@@ -384,10 +454,10 @@ function calcPay() {
 function printPaytable() {
 	var payTxt = '';
 	document.getElementById("paytable").innerHTML=payTxt;
-	payTxt='<tr><td width=10%>Spots</td><td>Payout</td></tr>';
+	payTxt='<tr><td width=10%></td><td width=10%>Spots</td><td>Payout</td><td></td width=10%><td width=100% /></tr>';
 	for (s = 0; s <= spots; s++) {
 		
-		payTxt += '<tr><td>' + s + '</td><td>' + payout[s] + '</td></tr>';
+		payTxt += '<tr><td id="p' + s + 'c' + 1 + '"></td><td>' + s + '</td><td>' + payout[s] + '</td><td id="p' + s + 'c' + 2 + '"></td><td /></tr>';
 	}
 	document.getElementById("paytable").innerHTML=payTxt;
 }
@@ -402,7 +472,20 @@ function clearOdds() {
 }
 
 function clearPaytable() {
-	var payTxt = '<tr><td width=10%>Spots</td><td>Payout</td></tr>';
+	var payTxt = '<tr><td width=10%>Spots</td><td>Payout</td><td /></tr>';
 	payTxt += '<tr><td>0</td><td>0</td></tr>';
 	document.getElementById("paytable").innerHTML=payTxt;
 }
+
+/*
+	SoundJS Functions
+*/
+
+// Placeholder for future SoundJS functions
+
+
+/*
+	jQuery Functions
+*/
+
+// Placeholder for future SoundJS functions
