@@ -1,3 +1,54 @@
+/**
+ *
+ * @source: https://github.com/anizaeger/jsSlots
+ *
+ * @licstart  The following is the entire license notice for the 
+ * JavaScript code in this page.
+ *
+ * Copyright (C) 2016 Anakin-Marc Zaeger
+ *
+ *
+ * The JavaScript code in this page is free software: you can
+ * redistribute it and/or modify it under the terms of the GNU
+ * General Public License (GNU GPL) as published by the Free Software
+ * Foundation, either version 3 of the License, or (at your option)
+ * any later version.  The code is distributed WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+ *
+ * As additional permission under GNU GPL version 3 section 7, you
+ * may distribute non-source (e.g., minimized or compacted) forms of
+ * that code without the copy of the GNU GPL normally required by
+ * section 4, provided you include this license notice and a URL
+ * through which recipients can access the Corresponding Source.
+ *
+ *
+ * @licend The above is the entire license notice
+ * for the JavaScript code in this page.
+ *
+ */
+
+function gplAlert() {
+	var copyText = "";
+	copyText += "Copyright (C) 2016 Anakin-Marc Zaeger\n"
+	copyText += "\n"
+	copyText += "\n"
+	copyText += "The JavaScript code in this page is free software: you can\n"
+	copyText += "redistribute it and/or modify it under the terms of the GNU\n"
+	copyText += "General Public License (GNU GPL) as published by the Free Software\n"
+	copyText += "Foundation, either version 3 of the License, or (at your option)\n"
+	copyText += "any later version.  The code is distributed WITHOUT ANY WARRANTY;\n"
+	copyText += "without even the implied warranty of MERCHANTABILITY or FITNESS\n"
+	copyText += "FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.\n"
+	copyText += "\n"
+	copyText += "As additional permission under GNU GPL version 3 section 7, you\n"
+	copyText += "may distribute non-source (e.g., minimized or compacted) forms of\n"
+	copyText += "that code without the copy of the GNU GPL normally required by\n"
+	copyText += "section 4, provided you include this license notice and a URL\n"
+	copyText += "through which recipients can access the Corresponding Source.\n"
+	window.alert(copyText)
+}
+
 var BALLS = 80;
 var DRAWS = 20;
 
