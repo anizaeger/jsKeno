@@ -52,10 +52,10 @@ function gplAlert() {
 var BALLS = 80;
 var DRAWS = 20;
 
-var maxSpots = 10;	// Maximum number of playable spots [Default: 10]
-var maxBet = 5;		// Maximum bet per game [Default: 5]
-var houseEdge = 15;	// House edge for payout compared to true odds.  Payout calculated from odds will be reduced by this percentage [Default: 15]
-var maxPayout = 100000;	// Maximum payout per game [Default: 100000]
+var maxSpots = 10;		// Maximum number of playable spots [Default: 10]
+var betLimit = 5;		// Maximum bet per game [Default: 5]
+var houseEdge = 30;		// House edge for payout compared to true odds.  Payout calculated from odds will be reduced by this percentage [Default: 30]
+var maxPayout = 100000;		// Maximum payout per game [Default: 100000]
 
 var spots;	// Number of spots 
 var hits;	// Number of hits
@@ -69,10 +69,11 @@ var spotCombos = new Array( DRAWS + 1);
 var pcntOdds = new Array( DRAWS + 1);
 var payout = new Array( DRAWS + 1);
 
-var betAmt = 0;
-
 function init() {
 	spots = 0;
+	document.getElementById("spots").value=spots;
+	betAmt = 0;
+	document.getElementById("betAmt").value=betAmt;
 	// Initialize ball pool by setting array elements to numbers 1 through 80.
 	for ( b = 0; b < BALLS; b++ ) {
 		pool[ b ] = b + 1;
@@ -168,7 +169,17 @@ function popDraws(dIndex) {
 }
 
 function checkHits() {
-	endGame();
+	if ( payout[hits] > 0 ) {
+		setTimeout(function() {
+			payWin();
+		},150 )
+	} else {
+		endGame();
+	}
+}
+
+function payWin() {
+	alert("Win!")
 }
 
 function endGame() {
@@ -206,9 +217,9 @@ function pickNum(num) {
 		return;
 	}
 	if ( card[num] == 1 ) {
-		daubCell(num,0);
+		daubCell(num,0,0);
 	} else {
-		if ( spots < maxSpots) { daubCell(num,1); }
+		if ( spots < maxSpots) { daubCell(num,1,0); }
 	}
 	calcOdds();
 	if ( spots == 0 ) {
@@ -242,7 +253,7 @@ function quickPick() {
 	shuffleBalls();
 	for ( var p = 0; p < qpSpots; p++ ) {
 		qp = pool[ p ] - 1;
-		daubCell(qp,1);
+		daubCell(qp,1,1);
 	}
 	calcOdds();
 }
@@ -252,7 +263,7 @@ function qpPrompt() {
 	return qp;
 }
 
-function daubCell(num,daub) {
+function daubCell(num,daub,qp) {
 	card[num] = daub;
 	if ( daub == 1 ) {
 		document.getElementById("n"+num).style.backgroundImage="url(images/brushstroke.png)";
@@ -262,6 +273,10 @@ function daubCell(num,daub) {
 		document.getElementById("n"+num).style.backgroundImage="none";
 		document.getElementById("n"+num).style.color="black";
 		spots--
+	}
+	if ( qp != 1 ) {
+		var snd = new Audio("sounds/tick.wav");
+		snd.play();
 	}
 	document.getElementById("spots").value=spots;
 }
@@ -282,17 +297,28 @@ function cashOut() {
 }
 
 function betOne() {
-	document.getElementById("qpBtn").disabled=false;
-	document.getElementById("spots").value=spots;
-	document.getElementById("messageBoard").innerHTML="&nbsp;";
-	clearBoard();
-	betAmt++;
-	document.getElementById("betAmt").value=betAmt;
-	calcPay();
+	if ( betAmt < betLimit ) {
+		document.getElementById("qpBtn").disabled=false;
+		document.getElementById("spots").value=spots;
+		document.getElementById("messageBoard").innerHTML="&nbsp;";
+		clearBoard();
+		var snd = new Audio("sounds/coinBong.wav");
+		snd.play();
+		betAmt++;
+		document.getElementById("betAmt").value=betAmt;
+		calcPay();
+	}
 }
 
 function betMax() {
-	
+	if ( betAmt >= betLimit || credits <= 0) {
+		return;
+	} else {
+		betOne();
+	}
+	setTimeout(function () {
+		betMax();
+	}, 125 )
 }
 
 /*
@@ -345,7 +371,7 @@ function calcPay() {
 			if ( p < minHits && pcntOdds[p] > pcntOdds[minHits] ) {
 				payout[p] = 0;
 			} else {
-				payout[p] = Math.round( ( 1 / pcntOdds[p] ) * ( ( 100 - houseEdge ) / 100 ) ) * betAmt;
+				payout[p] = Math.round( ( ( 100 - houseEdge ) / 100 ) / ( pcntOdds[p] ) ) * betAmt;
 				if ( payout[p] > maxPayout ) {
 					payout[p] = maxPayout;
 				}
