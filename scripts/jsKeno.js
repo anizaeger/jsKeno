@@ -1,6 +1,6 @@
 /**
  *
- * @source: https://github.com/anizaeger/jsSlots
+ * @source: https://github.com/anizaeger/jsKeno
  *
  * @licstart  The following is the entire license notice for the 
  * JavaScript code in this page.
