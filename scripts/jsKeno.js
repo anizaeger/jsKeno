@@ -51,12 +51,17 @@ function gplAlert() {
 
 var BALLS = 80;
 var DRAWS = 20;
+var UNDRAWN = BALLS - DRAWS;
 
+var billCredits = 100;		// Number of credits when inserting bill.
 var maxSpots = 10;		// Maximum number of playable spots [Default: 10]
 var betLimit = 5;		// Maximum bet per game [Default: 5]
 var houseEdge = 30;		// House edge for payout compared to true odds.  Payout calculated from odds will be reduced by this percentage [Default: 30]
 var maxPayout = 100000;		// Maximum payout per game [Default: 100000]
 var credits = 0;
+
+var cashingOut = 0;
+var lockBtn = 0;
 
 var spots;	// Number of spots 
 var hits;	// Number of hits
@@ -354,11 +359,30 @@ function startGame() {
 */
 
 function insertCoin() {
-	return;
+	if ( cashingOut == 1 || lockBtn == 1 ) {
+		return;
+	} else {
+		lockBtn = 1;
+		var snd = new Audio("sounds/insertCoin.wav");
+		snd.play();
+		setTimeout(function () {
+			lockBtn = 0;
+			credits++;
+			betOne();
+		}, 750 )
+	}
 }
 
 function insertBill() {
-	return;
+	if ( cashingOut == 1 || lockBtn == 1 ) {
+		return;
+	} else {
+		clearBoard();
+		credits = credits + billCredits;
+		document.getElementById("credits").value=credits;
+		var snd = new Audio("sounds/coinBong.wav");
+		snd.play();
+	}
 }
 
 function cashOut() {
@@ -366,17 +390,23 @@ function cashOut() {
 }
 
 function betOne() {
-	if ( betAmt < betLimit ) {
-		gameOver = 0;
-		document.getElementById("qpBtn").disabled=false;
-		document.getElementById("spots").value=spots;
-		document.getElementById("messageBoard").innerHTML="&nbsp;";
-		clearBoard();
-		var snd = new Audio("sounds/coinBong.wav");
-		snd.play();
-		betAmt++;
-		document.getElementById("betAmt").value=betAmt;
-		calcPay();
+	if ( lockBtn != 1 ) {
+		if ( betAmt < betLimit ) {
+			if ( credits > 0 ) {
+				gameOver = 0;
+				document.getElementById("qpBtn").disabled=false;
+				document.getElementById("spots").value=spots;
+				document.getElementById("messageBoard").innerHTML="&nbsp;";
+				clearBoard();
+				var snd = new Audio("sounds/coinBong.wav");
+				snd.play();
+				credits--;
+				document.getElementById("credits").value=credits;
+				betAmt++;
+				document.getElementById("betAmt").value=betAmt;
+				calcPay();
+			}
+		}
 	}
 }
 
@@ -397,8 +427,8 @@ function betMax() {
 
 function factorial(num) {
 	var factor = 1;
-	for ( x = num; x > 1; x-- ) {
-		factor *= x
+	for ( x = 1; x <= num; x++ ) {
+		factor *= x;
 	}
 	return factor;
 }
@@ -409,18 +439,17 @@ function combin(total,part) {
 	combos = num / denom;
 	return combos;
 }
-function kenoProbs(balls,drawn,spots) {
+function kenoProbs(spots,hits) {
 	var odds;
-	var undrawn = balls - drawn;
-	odds = Math.round(combin(drawn,s)*combin(undrawn,spots-s));
+	odds = Math.round(combin(DRAWS,hits)*combin(UNDRAWN,spots-hits));
 	return odds;
 }
 
 function calcOdds() {
 	var combos = 0;
-	for ( s = 0; s <= spots; s++ ) {
-		spotCombos[s] = kenoProbs(BALLS,DRAWS,spots);
-		combos += spotCombos[s]
+	for ( hits = 0; hits <= spots; hits++ ) {
+		spotCombos[hits] = kenoProbs(spots,hits);
+		combos += spotCombos[hits]
 	}
 	for ( p = 0; p <= spots; p++ ) {
 		pcntOdds[p] = ( spotCombos[p] / combos );
@@ -437,13 +466,13 @@ function calcPay() {
 		} else {
 			minHits = Math.round( spots / 2 );
 		}
-		for ( p = 0; p <= spots; p++ ) {
-			if ( p < minHits && pcntOdds[p] > pcntOdds[minHits] ) {
-				payout[p] = 0;
+		for ( hits = 0; hits <= spots; hits++ ) {
+			if ( hits < minHits && pcntOdds[hits] > pcntOdds[minHits] ) {
+				payout[hits] = 0;
 			} else {
-				payout[p] = Math.round( ( ( 100 - houseEdge ) / 100 ) / ( pcntOdds[p] ) ) * betAmt;
-				if ( payout[p] > maxPayout ) {
-					payout[p] = maxPayout;
+				payout[hits] = Math.round( ( ( 100 - houseEdge ) / 100 ) / ( pcntOdds[hits] ) ) * betAmt;
+				if ( payout[hits] > maxPayout ) {
+					payout[hits] = maxPayout;
 				}
 			}
 		}
