@@ -165,6 +165,7 @@ function popDraws(dIndex) {
 	} else {
 		document.getElementById("n"+cell).style.backgroundColor="#00ffff";
 	}
+	markHits();
 	dIndex++
 	if ( dIndex < DRAWS ) {
 		setTimeout(function() {
@@ -175,11 +176,18 @@ function popDraws(dIndex) {
 	}
 }
 
+function markHits() {
+	for ( var h = 0; h <= spots; h++ ) {
+		document.getElementById('p' + h + 'c1').innerHTML="&nbsp;"
+		document.getElementById('p' + h + 'c2').innerHTML="&nbsp;"
+	}
+	document.getElementById('p' + hits + 'c1').innerHTML="-->"
+	document.getElementById('p' + hits + 'c2').innerHTML="<--"
+}
+
 function checkHits() {
 	if ( payout[hits] > 0 ) {
 		setTimeout(function() {
-			document.getElementById('p' + hits + 'c1').innerHTML="-->"
-			document.getElementById('p' + hits + 'c2').innerHTML="<--"
 			payWin();
 		},150 )
 	} else {
@@ -447,7 +455,7 @@ function kenoProbs(spots,hits) {
 
 function calcOdds() {
 	var combos = 0;
-	for ( hits = 0; hits <= spots; hits++ ) {
+	for ( var hits = 0; hits <= spots; hits++ ) {
 		spotCombos[hits] = kenoProbs(spots,hits);
 		combos += spotCombos[hits]
 	}
@@ -466,7 +474,7 @@ function calcPay() {
 		} else {
 			minHits = Math.round( spots / 2 );
 		}
-		for ( hits = 0; hits <= spots; hits++ ) {
+		for ( var hits = 0; hits <= spots; hits++ ) {
 			if ( hits < minHits && pcntOdds[hits] > pcntOdds[minHits] ) {
 				payout[hits] = 0;
 			} else {
@@ -483,7 +491,7 @@ function calcPay() {
 function printPaytable() {
 	var payTxt = '';
 	document.getElementById("paytable").innerHTML=payTxt;
-	payTxt='<tr><td width=10%></td><td width=10%>Spots</td><td>Payout</td><td></td width=10%><td width=100% /></tr>';
+	payTxt+='<tr><td width=10%>&nbsp;</td><td width=10%>Spots</td><td width=10%>Payout</td><td width=10%>&nbsp;</td><td width=100% /></tr>';
 	for (s = 0; s <= spots; s++) {
 		
 		payTxt += '<tr><td id="p' + s + 'c' + 1 + '"></td><td>' + s + '</td><td>' + payout[s] + '</td><td id="p' + s + 'c' + 2 + '"></td><td /></tr>';
