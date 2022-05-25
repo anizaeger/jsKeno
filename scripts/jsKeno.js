@@ -1,6 +1,6 @@
 /**
  *
- * @source: https://github.com/anizaeger/jsSlots
+ * @source: https://github.com/anizaeger/jsKeno
  *
  * @licstart  The following is the entire license notice for the 
  * JavaScript code in this page.
@@ -51,11 +51,17 @@ function gplAlert() {
 
 var BALLS = 80;
 var DRAWS = 20;
+var UNDRAWN = BALLS - DRAWS;
 
-var maxSpots = 10;	// Maximum number of playable spots [Default: 10]
-var maxBet = 5;		// Maximum bet per game [Default: 5]
-var houseEdge = 15;	// House edge for payout compared to true odds.  Payout calculated from odds will be reduced by this percentage [Default: 15]
-var maxPayout = 100000;	// Maximum payout per game [Default: 100000]
+var billCredits = 100;		// Number of credits when inserting bill.
+var maxSpots = 10;		// Maximum number of playable spots [Default: 10]
+var betLimit = 5;		// Maximum bet per game [Default: 5]
+var houseEdge = 30;		// House edge for payout compared to true odds.  Payout calculated from odds will be reduced by this percentage [Default: 30]
+var maxPayout = 100000;		// Maximum payout per game [Default: 100000]
+var credits = 0;
+
+var cashingOut = 0;
+var lockBtn = 0;
 
 var spots;	// Number of spots 
 var hits;	// Number of hits
@@ -68,8 +74,7 @@ var combos;
 var spotCombos = new Array( DRAWS + 1);
 var pcntOdds = new Array( DRAWS + 1);
 var payout = new Array( DRAWS + 1);
-
-var betAmt = 0;
+var gameOver;
 
 function init() {
 	spots = 0;
@@ -84,6 +89,9 @@ function init() {
 	clearBoard();
 	clearCard();
 	clearPaytable();
+	endGame();
+	document.getElementById("spots").value=spots;
+	document.getElementById("betAmt").value=betAmt;
 }
 
 // Generate HTML table representing keno ball "rabbit ears"
@@ -113,7 +121,7 @@ function initTable() {
 		}
 		boardTxt += '</tr>';
 		if ( row == 3 ) {	// Generate gap/message board between upper and lower halfs of game card
-			boardTxt += '<tr><td colspan=10 align="center" ><div id="messageBoard">Game Over</div></td></tr>'
+			boardTxt += '<tr><td colspan=10 align="center" ><div id="messageBoard"></div></td></tr>'
 		}
 	}
 	document.getElementById("playfield").innerHTML=boardTxt;
@@ -157,6 +165,7 @@ function popDraws(dIndex) {
 	} else {
 		document.getElementById("n"+cell).style.backgroundColor="#00ffff";
 	}
+	markHits();
 	dIndex++
 	if ( dIndex < DRAWS ) {
 		setTimeout(function() {
@@ -167,13 +176,82 @@ function popDraws(dIndex) {
 	}
 }
 
-function checkHits() {
-	endGame();
+function markHits() {
+	for ( var h = 0; h <= spots; h++ ) {
+		document.getElementById('p' + h + 'c1').innerHTML="&nbsp;"
+		document.getElementById('p' + h + 'c2').innerHTML="&nbsp;"
+	}
+	document.getElementById('p' + hits + 'c1').innerHTML="-->"
+	document.getElementById('p' + hits + 'c2').innerHTML="<--"
 }
+
+function checkHits() {
+	if ( payout[hits] > 0 ) {
+		setTimeout(function() {
+			payWin();
+		},150 )
+	} else {
+		endGame();
+	}
+}
+
+function payWin() {
+	credits += payout[hits];
+	document.getElementById("credits").value=credits;
+}
+
+/*
+function payWin(wintype,payout,i,paySound) {
+	var loopTime;
+	document.getElementById("win").value=payout;
+	
+	if (payout >= 300) {
+		loopTime = 25;
+	} else {
+		loopTime = 100;
+	}
+	if ( wintype == 0 && betAmt == maxLineBet) {
+		jackpot(0);
+		return;
+	} else {
+		if ( loopTime == 25 ) {
+			if ( i % 4 == 0 ) {
+				playSound("paySound" + paySound);
+				paySound++;
+			}
+		} else {
+			playSound("paySound" + paySound);
+			paySound++;
+		}
+		if (paySound == paySounds ) { paySound = 0; }
+	}
+	
+	i++;
+	credits++
+	setCookie("credits",credits,expiry);
+	document.getElementById("paid").value=i;
+	document.getElementById("credits").value=credits;
+	payStats(-1);
+
+	if ( dbgRapid == 1 ) {
+		loopTime = 0;
+	}
+
+	setTimeout(function () {
+		if (i < payout) {
+			payWin(wintype,payout,i,paySound);
+		} else {
+			document.getElementById("wintype").innerHTML="<marquee>"+paytable[wintype][4]+"</marquee>";
+			endGame();
+		}
+	}, loopTime);
+}
+*/
 
 function endGame() {
 	betAmt = 0;
-	document.getElementById("messageBoard").innerHTML="Game Over";
+	gameOver = 1;
+	document.getElementById("messageBoard").innerHTML="Game Over - Play " + betLimit + " Credits";
 }
 
 function clearBoard() {
@@ -191,6 +269,9 @@ function clearBoard() {
 }
 
 function clearCard() {
+	if ( gameOver == 1 ) {
+		return;
+	}
 	for ( n = 0; n < BALLS; n++ ) {
 		card[n] = 0;
 		document.getElementById("n"+n).style.backgroundImage="none";
@@ -206,9 +287,9 @@ function pickNum(num) {
 		return;
 	}
 	if ( card[num] == 1 ) {
-		daubCell(num,0);
+		daubCell(num,0,0);
 	} else {
-		if ( spots < maxSpots) { daubCell(num,1); }
+		if ( spots < maxSpots) { daubCell(num,1,0); }
 	}
 	calcOdds();
 	if ( spots == 0 ) {
@@ -242,7 +323,7 @@ function quickPick() {
 	shuffleBalls();
 	for ( var p = 0; p < qpSpots; p++ ) {
 		qp = pool[ p ] - 1;
-		daubCell(qp,1);
+		daubCell(qp,1,1);
 	}
 	calcOdds();
 }
@@ -252,7 +333,7 @@ function qpPrompt() {
 	return qp;
 }
 
-function daubCell(num,daub) {
+function daubCell(num,daub,qp) {
 	card[num] = daub;
 	if ( daub == 1 ) {
 		document.getElementById("n"+num).style.backgroundImage="url(images/brushstroke.png)";
@@ -262,6 +343,10 @@ function daubCell(num,daub) {
 		document.getElementById("n"+num).style.backgroundImage="none";
 		document.getElementById("n"+num).style.color="black";
 		spots--
+	}
+	if ( qp != 1 ) {
+		var snd = new Audio("sounds/tick.wav");
+		snd.play();
 	}
 	document.getElementById("spots").value=spots;
 }
@@ -277,22 +362,71 @@ function startGame() {
 	betAmt = 0;
 }
 
+/*
+	Credit related functions
+*/
+
+function insertCoin() {
+	if ( cashingOut == 1 || lockBtn == 1 ) {
+		return;
+	} else {
+		lockBtn = 1;
+		var snd = new Audio("sounds/insertCoin.wav");
+		snd.play();
+		setTimeout(function () {
+			lockBtn = 0;
+			credits++;
+			betOne();
+		}, 750 )
+	}
+}
+
+function insertBill() {
+	if ( cashingOut == 1 || lockBtn == 1 ) {
+		return;
+	} else {
+		clearBoard();
+		credits = credits + billCredits;
+		document.getElementById("credits").value=credits;
+		var snd = new Audio("sounds/coinBong.wav");
+		snd.play();
+	}
+}
+
 function cashOut() {
 	clearBoard();
 }
 
 function betOne() {
-	document.getElementById("qpBtn").disabled=false;
-	document.getElementById("spots").value=spots;
-	document.getElementById("messageBoard").innerHTML="&nbsp;";
-	clearBoard();
-	betAmt++;
-	document.getElementById("betAmt").value=betAmt;
-	calcPay();
+	if ( lockBtn != 1 ) {
+		if ( betAmt < betLimit ) {
+			if ( credits > 0 ) {
+				gameOver = 0;
+				document.getElementById("qpBtn").disabled=false;
+				document.getElementById("spots").value=spots;
+				document.getElementById("messageBoard").innerHTML="&nbsp;";
+				clearBoard();
+				var snd = new Audio("sounds/coinBong.wav");
+				snd.play();
+				credits--;
+				document.getElementById("credits").value=credits;
+				betAmt++;
+				document.getElementById("betAmt").value=betAmt;
+				calcPay();
+			}
+		}
+	}
 }
 
 function betMax() {
-	
+	if ( betAmt >= betLimit || credits <= 0) {
+		return;
+	} else {
+		betOne();
+	}
+	setTimeout(function () {
+		betMax();
+	}, 125 )
 }
 
 /*
@@ -301,8 +435,8 @@ function betMax() {
 
 function factorial(num) {
 	var factor = 1;
-	for ( x = num; x > 1; x-- ) {
-		factor *= x
+	for ( x = 1; x <= num; x++ ) {
+		factor *= x;
 	}
 	return factor;
 }
@@ -313,18 +447,17 @@ function combin(total,part) {
 	combos = num / denom;
 	return combos;
 }
-function kenoProbs(balls,drawn,spots) {
+function kenoProbs(spots,hits) {
 	var odds;
-	var undrawn = balls - drawn;
-	odds = Math.round(combin(drawn,s)*combin(undrawn,spots-s));
+	odds = Math.round(combin(DRAWS,hits)*combin(UNDRAWN,spots-hits));
 	return odds;
 }
 
 function calcOdds() {
 	var combos = 0;
-	for ( s = 0; s <= spots; s++ ) {
-		spotCombos[s] = kenoProbs(BALLS,DRAWS,spots);
-		combos += spotCombos[s]
+	for ( var hits = 0; hits <= spots; hits++ ) {
+		spotCombos[hits] = kenoProbs(spots,hits);
+		combos += spotCombos[hits]
 	}
 	for ( p = 0; p <= spots; p++ ) {
 		pcntOdds[p] = ( spotCombos[p] / combos );
@@ -341,13 +474,13 @@ function calcPay() {
 		} else {
 			minHits = Math.round( spots / 2 );
 		}
-		for ( p = 0; p <= spots; p++ ) {
-			if ( p < minHits && pcntOdds[p] > pcntOdds[minHits] ) {
-				payout[p] = 0;
+		for ( var hits = 0; hits <= spots; hits++ ) {
+			if ( hits < minHits && pcntOdds[hits] > pcntOdds[minHits] ) {
+				payout[hits] = 0;
 			} else {
-				payout[p] = Math.round( ( 1 / pcntOdds[p] ) * ( ( 100 - houseEdge ) / 100 ) ) * betAmt;
-				if ( payout[p] > maxPayout ) {
-					payout[p] = maxPayout;
+				payout[hits] = Math.round( ( ( 100 - houseEdge ) / 100 ) / ( pcntOdds[hits] ) ) * betAmt;
+				if ( payout[hits] > maxPayout ) {
+					payout[hits] = maxPayout;
 				}
 			}
 		}
@@ -358,10 +491,10 @@ function calcPay() {
 function printPaytable() {
 	var payTxt = '';
 	document.getElementById("paytable").innerHTML=payTxt;
-	payTxt='<tr><td width=10%>Spots</td><td>Payout</td></tr>';
+	payTxt+='<tr><td width=10%>&nbsp;</td><td width=10%>Spots</td><td width=10%>Payout</td><td width=10%>&nbsp;</td><td width=100% /></tr>';
 	for (s = 0; s <= spots; s++) {
 		
-		payTxt += '<tr><td>' + s + '</td><td>' + payout[s] + '</td></tr>';
+		payTxt += '<tr><td id="p' + s + 'c' + 1 + '"></td><td>' + s + '</td><td>' + payout[s] + '</td><td id="p' + s + 'c' + 2 + '"></td><td /></tr>';
 	}
 	document.getElementById("paytable").innerHTML=payTxt;
 }
@@ -376,7 +509,20 @@ function clearOdds() {
 }
 
 function clearPaytable() {
-	var payTxt = '<tr><td width=10%>Spots</td><td>Payout</td></tr>';
+	var payTxt = '<tr><td width=10%>Spots</td><td>Payout</td><td /></tr>';
 	payTxt += '<tr><td>0</td><td>0</td></tr>';
 	document.getElementById("paytable").innerHTML=payTxt;
 }
+
+/*
+	SoundJS Functions
+*/
+
+// Placeholder for future SoundJS functions
+
+
+/*
+	jQuery Functions
+*/
+
+// Placeholder for future SoundJS functions
